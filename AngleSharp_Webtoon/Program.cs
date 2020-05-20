@@ -12,7 +12,7 @@ using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
-namespace AngleSharp_Webtoon
+namespace Webtoon
 {
     class Program
     {
@@ -25,7 +25,8 @@ namespace AngleSharp_Webtoon
         static string[] Links_chapter;
         static string[] Names_chapter;
         static void Main(string[] args)
-        {/*
+        {
+            /*
             Console.Write(" Введите откуда вы хотите скачать главы : \r\n" +
                               " 1) Webtoon; \n" +
                               " 2) Readmanga; \n" +
@@ -34,6 +35,7 @@ namespace AngleSharp_Webtoon
             //int Choise = Convert.ToInt32(Console.ReadLine());
             Console.WriteLine();
             */
+
             int Choise = 1;
 
             switch (Choise)

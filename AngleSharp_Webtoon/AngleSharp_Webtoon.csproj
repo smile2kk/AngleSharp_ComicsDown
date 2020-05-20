@@ -3,6 +3,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <ApplicationIcon>webtoon.ico</ApplicationIcon>
+    <AssemblyName>Webtoon</AssemblyName>
+    <RootNamespace>Webtoon</RootNamespace>
+    <StartupObject></StartupObject>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
