@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Webtoon": {
-      "commandName": "Executable",
-      "executablePath": "C:\\Users\\smile\\source\\repos\\AngleSharp_Webtoon\\AngleSharp_Webtoon\\bin\\Debug\\netcoreapp3.1\\Webtoon.exe"
-    }
-  }
-}
