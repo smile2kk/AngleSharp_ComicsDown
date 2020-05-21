@@ -19,11 +19,10 @@ namespace Webtoon
         static string URL = String.Empty;
         static string URL_Chaps = String.Empty;
         static string URL_Eps = String.Empty;
-
-        static string Path = String.Empty;
-
+        
         static string[] Links_chapter;
-        static string[] Names_chapter;
+        static string[] Episode_Names;
+
         static void Main(string[] args)
         {
             /*
@@ -42,28 +41,45 @@ namespace Webtoon
             {
                 case 1:
                     {
-                        Console.Write(" Введите URL Вебтуна главы которого вы хотите скачать : ");
+                        Console.Write(" Введите URL Вебтуна главы которого вы хотите скачать (прим. https://www.webtoons.com/en/challenge/luck/list?title_no=379293): ");
                         URL = Console.ReadLine();
                         Console.WriteLine();
                         Chap_Names(URL);
 
                     Excep:
-                        Console.Write("\n С какой по какую главу вы хотите скачать ([начало] - [конец]) : ");
+
+                        Console.Write("\n С какой по какую главу вы хотите скачать (прим. 0-7) : ");
                         string[] Eps = Console.ReadLine().Split('-');
                         for (int i = 0; i < Eps.Length; i++)
                             Eps[i].Trim();
 
+                        int Eps_End = 0;
                         int Eps_Beg = Convert.ToInt32(Eps[0]);
-                        int Eps_End = Convert.ToInt32(Eps[1]);
+                        if (Eps.Length > 1)
+                            Eps_End = Convert.ToInt32(Eps[1]);
+                        if (Eps.Length == 1)
+                            Eps_End = Eps_Beg;
 
                         if (Eps_Beg > Eps_End)
                         {
                             Console.WriteLine(" Индекс начала не может быть больше индекса конца!!!!");
                             goto Excep;
                         }
-                        Console.Write("\n Укажите путь куда вы хотите загрузить главы : ");
-                        Path = Console.ReadLine();
-                        Img_Down(Links_chapter, Eps_Beg, Eps_End, Path);
+                    
+                    Path:
+                        Console.Write("\n Укажите путь куда вы хотите загрузить главы (прим. С:\\Users\\Smile2kk\\Desktop\\): ");
+                        string Path = Console.ReadLine();
+
+                        if(!Path.StartsWith("C") || !Path.StartsWith("D") || !Path.StartsWith("E") || !Path.StartsWith("F"))
+                        {
+                            Console.WriteLine(" Путь должен начинаться с указания названия тома.");
+                        }
+
+                        Console.Write("\n Как вы хотите назвать ваш склееный файл? (прим. Это название будет в каждой папке главы ) ");
+                        string Name = Console.ReadLine().Trim();
+
+
+                        Img_Down(Links_chapter, Eps_Beg, Eps_End, Path, Name);
                         break;
                     }
             }
@@ -78,7 +94,6 @@ namespace Webtoon
                 // Создание строки содержащую код страницы
 
                 var Parser_Chaps = new HtmlParser();
-                Parser_Chaps = new HtmlParser();
                 var Doc_Pages = Parser_Chaps.ParseDocument(Page_Chaps);
                 //Создание парсер-документа HTML Страницы
 
@@ -89,38 +104,60 @@ namespace Webtoon
 
                 int Num_Chap = 0, Num_Page = 1;
                 Links_chapter = new string[Last_Chap_Num];
-                List<string>[] Names_Chap = new List<string>[Last_Chap_Num];
+                //List<string>[] Names_Chap = new List<string>[Last_Chap_Num];
+                Episode_Names = new string[Last_Chap_Num];
+                Console.WriteLine("Получение глав из : \n");
                 while (Num_Chap < Last_Chap_Num)
                 {
-
-                    Data_Chaps = Wb_Chaps.DownloadData(URL_Chaps);
-                    Page_Chaps = Encoding.Default.GetString(Data_Chaps);
-
-                    Parser_Chaps = new HtmlParser();
-                    Doc_Pages = Parser_Chaps.ParseDocument(Page_Chaps);
-                    //Парсинг страницы с главами
-                    var ChapNames = Doc_Pages.QuerySelectorAll("span.subj > span");
-                    var Link_Ep = Doc_Pages.QuerySelectorAll("li[data-episode-no] > a");
-                    //Получение названий Глав и ссылок на Главы
-                    for (int i = 0; i < ChapNames.Length; i++)
+                    if (Num_Page == 1)
+                        Console.WriteLine($"{URL_Chaps}&page=1");
+                    else
+                        Console.WriteLine($"{URL_Chaps}");
+                    using (WebClient wc = new WebClient())
                     {
-                        Console.WriteLine(" [" + Num_Chap + "]  " + ChapNames[ChapNames.Length - 1 - i].Text());
-                        Links_chapter[Num_Chap] = Link_Ep[ChapNames.Length - 1 - i].GetAttribute("href");
-                        if (Num_Chap < Last_Chap_Num)
-                            Num_Chap++;
-                    }
-                    Num_Page++;
+                        wc.UseDefaultCredentials = true;
+                        wc.Headers.Add("User-agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 OPR/68.0.3618.104");
+                        Data_Chaps = Wb_Chaps.DownloadData(URL_Chaps);
+                        Page_Chaps = Encoding.Default.GetString(Data_Chaps);
 
+                        Parser_Chaps = new HtmlParser();
+                        Doc_Pages = Parser_Chaps.ParseDocument(Page_Chaps);
+                        //Парсинг страницы с главами
+                        var ChapNames = Doc_Pages.QuerySelectorAll("span.subj > span");
+                        var Link_Ep = Doc_Pages.QuerySelectorAll("li[data-episode-no] > a");
+                        //Получение названий Глав и ссылок на Главы
+                        for (int i = 0; i < ChapNames.Length; i++)
+                        {
+                            //Console.WriteLine(" [" + Num_Chap + "]  " + ChapNames[i].Text());
+                            Episode_Names[Num_Chap] = $"{ChapNames[i].Text()}";
+                            Links_chapter[Num_Chap] = Link_Ep[i].GetAttribute("href");//ChapNames.Length - 1 - i
+                            if (Num_Chap < Last_Chap_Num)
+                                Num_Chap++;
+                        }
+                        Num_Page++;
+                    }
                     URL_Chaps = URL;
                     URL_Chaps = URL + "&page=" + Num_Page;
                 }
+
+                Console.WriteLine("Список глав : \n");
+
+                for(Num_Chap = 0; Num_Chap < Last_Chap_Num - 1; Num_Chap++)
+                {
+                    for(int i = 0; i < Episode_Names.Length; i++)
+                    {
+                        Console.WriteLine(" [" + Num_Chap + "]  " + Episode_Names[Episode_Names.Length - 1 - i]);
+                        if (Num_Chap < Last_Chap_Num)
+                            Num_Chap++;
+                    }
+                }
             }
         }
-        static void Img_Down(string[] Links, int Beg, int End, string Path)
+        static void Img_Down(string[] Links, int Beg, int End, string Path, string Name)
         {
             using (WebClient wc = new WebClient())
             {
-                while (Beg < End) 
+                while (Beg <= End) 
                 {
                     var Page = wc.DownloadData(Links[Beg]);
                     var Page_Img = Encoding.Default.GetString(Page);
@@ -138,8 +175,7 @@ namespace Webtoon
                     #region Download
                     for (int i = 0; i < Get_Data_Url.Length; i++)
                     {
-                        //https:/webtoon-phinf.pstatic.net/20200516_241/1589574502517Ku9ym_JPEG/9043590d-b92f-41ab-812a-6af735a0d76c.jpg?type=q90
-                        if (!Path.EndsWith(@"\"))
+                        if (Path.EndsWith(@"\"))
                         {
                             if (!Directory.Exists($"{Path}{Get_Chap_Name.Text()}"))
                                 Directory.CreateDirectory($"{Path}{Get_Chap_Name.Text()}");
@@ -152,34 +188,22 @@ namespace Webtoon
                         wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36 OPR/68.0.3618.63");
                         wc.Headers.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
                         wc.Headers.Add("Referer", Links[Beg]);
-                        // Path + "0" + j + ".png"
-                        //if (j < 10) wc.DownloadFile(link.Substring(link.Length - 10),);
-                        //else wc.DownloadFile(link.Substring(link.Length - 10));
                         if (i < 10)
                         {
-                            if (!Path.EndsWith(@"\")) wc.DownloadFile(new Uri(Get_Data_Url[i].GetAttribute("data-url")), $"{Path}\\{Get_Chap_Name.Text()}\\0{i}.jpg");
+                            if (Path.EndsWith(@"\")) wc.DownloadFile(new Uri(Get_Data_Url[i].GetAttribute("data-url")), $"{Path}\\{Get_Chap_Name.Text()}\\0{i}.jpg");
                             else wc.DownloadFile(new Uri(Get_Data_Url[i].GetAttribute("data-url")), $"{Path}{Get_Chap_Name.Text()}\\0{i}.jpg");
                             Console.WriteLine($" Изображение [{i}] загрузилось.....!");
                         }
                         else
                         {
-                            if (!Path.EndsWith(@"\")) wc.DownloadFile(new Uri(Get_Data_Url[i].GetAttribute("data-url")), $"{Path}\\{Get_Chap_Name.Text()}\\{i}.jpg");
+                            if (Path.EndsWith(@"\")) wc.DownloadFile(new Uri(Get_Data_Url[i].GetAttribute("data-url")), $"{Path}\\{Get_Chap_Name.Text()}\\{i}.jpg");
                             else wc.DownloadFile(new Uri(Get_Data_Url[i].GetAttribute("data-url")), $@"{Path}{Get_Chap_Name.Text()}\\{i}.jpg");
                             Console.WriteLine($" Изображение [{i}] загрузилось.....!");
                         }
-
-                        /*
-                        if (bm != null)
-                        {
-                            if (j < 10) bm.Save(Path + "0" + j + ".png", ImageFormat.Jpeg);
-                            else bm.Save(Path + j + ".png", ImageFormat.Jpeg);
-                        }
-                        */
                         wc.Headers.Clear();
                     }
                     #endregion
 
-                    //Bitmap Bmap = new Bitmap($"{Path}\\{Get_Chap_Name.Text()}\\00.jpg");
                     List<string> files = new List<string>();
                     string[] filesfrom = Directory.GetFiles($"{Path}\\{Get_Chap_Name.Text()}");
                     foreach (string filename in filesfrom)
@@ -225,24 +249,19 @@ namespace Webtoon
                             x += images[i].Width;
                             if (x >= wid)
                             {
-                                //MessageBox.Show("Pic #" + i);
                                 y += images[i].Height;
                                 x = 0;
                             }
                         }
                     }
-
-                    bm.Save($"{Path}\\{Get_Chap_Name.Text()}\\999.png", ImageFormat.Png);
-                    
-                    //for (int i = 1; i < 
+                    if (files.Count() <= 30)
+                        bm.Save($"{Path}\\{Get_Chap_Name.Text()}\\{Name}.png", ImageFormat.Png);
+                    else
+                        bm.Save($"{Path}\\{Get_Chap_Name.Text()}\\{Name}.jpg", ImageFormat.Jpeg);
+                    Console.WriteLine($"Сканы главы {Get_Chap_Name.Text()} успешно склеены....");
                     Beg++;
                 }
-
-                //Bitmap bmap = new Bitmap();
-                //$"{Path}\\{Get_Chap_Name.Text()}"
-
             }
-            //Bitmap Bm = new Bitmap();
         }
     }
 }
